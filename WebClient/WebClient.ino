@@ -30,6 +30,7 @@
 // SDCard                3 (Used on WizFi as MAC ID CS)
 // Reset                 7
 //
+// Status LED on         8 Flashes once connected.
 */
 
 
@@ -45,7 +46,7 @@
 
 GB4DSPILcdDriver lcd(A3);
 GBIMAC macID(3);
-byte macAddress[MAC_LENGTH],IPconnected = 0;
+byte macAddress[MAC_LENGTH],IPconnected = 0,lastLEDstate;
 // Enter a MAC address for your controller below.
 // Newer Ethernet shields have a MAC address printed on a sticker on the shield
 byte mac[] = {  0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
@@ -55,10 +56,15 @@ IPAddress server(74,125,237,114); // Google
 // with the IP address and port of the server 
 // that you want to connect to (port 80 is default for HTTP):
 EthernetClient client;
-
+#define N_ASSOCIATE   5
+#define N_WIFI_OK     6
+#define LED_STATUS    8
 void setup() {
-  pinMode(6, INPUT);
-  pinMode(5, INPUT);
+
+  pinMode(N_ASSOCIATE, INPUT);
+  pinMode(N_WIFI_OK, INPUT);
+  pinMode(LED_STATUS, OUTPUT);
+  digitalWrite(LED_STATUS, LOW);
   
     // start the serial library:
   Serial.begin(115200);
@@ -80,7 +86,7 @@ delay(1000);
   lcd.drawString(1,4, SGC_FONT_SIZE.LARGE, SGC_COLORS.WHITE,"LARGE FONT - WHITE");    
 
   lcd.drawString(1,9, SGC_FONT_SIZE.SMALL, SGC_COLORS.WHITE, "Establishing WiFi connection,");
-  lcd.drawString(1,10, SGC_FONT_SIZE.SMALL, SGC_COLORS.WHITE, "  please wait..."); 
+  lcd.drawString(1,10, SGC_FONT_SIZE.SMALL, SGC_COLORS.WHITE, "please wait..."); 
   lcd.drawCircle(120, 150, 20,SGC_COLORS.YELLOW);
 
 
@@ -96,7 +102,7 @@ for (i = 0; i < 6; i = i + 1) {
 Serial.println("");
 
   Serial.println("GorillaBuilderz Arduino WebClient for WiFi Shield");
-  Serial.println("Initialising modem and ataching to network...");
+  Serial.println("Initialising modem and attaching to network...");
   
   // Set the network name
   Ethernet.ssid("BatPhone");
@@ -137,6 +143,19 @@ void loop()
   if (client.available()) {
     char c = client.read();
     Serial.print(c);
+
+      if(digitalRead(N_WIFI_OK) == 0){
+        if(lastLEDstate == 0){
+          lastLEDstate = 1;
+      lcd.drawCircle(120, 150, 20,SGC_COLORS.GREEN);
+          digitalWrite(LED_STATUS, HIGH);
+        }
+          else{
+          lastLEDstate = 0;
+      lcd.drawCircle(120, 150, 20,SGC_COLORS.YELLOW);
+          digitalWrite(LED_STATUS, LOW);
+        }
+      }
     if(!IPconnected){
       IPconnected=1;
       lcd.clearScreen(); 
@@ -155,7 +174,7 @@ void loop()
     lcd.drawString(5,11, SGC_FONT_SIZE.MEDIUM, SGC_COLORS.WHITE, "WizFI Disconnecting!"); 
     lcd.drawCircle(120, 150, 20,SGC_COLORS.RED);
     client.stop();
-
+    digitalWrite(LED_STATUS, LOW);
     // do nothing forevermore:
     for(;;)
       ;
