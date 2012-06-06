@@ -13,13 +13,23 @@
  */
 
 /* Hardware pin allocation for Resets, CS' etc
+//
+// WizFi Shield Configuration
+//
 // WizFi SPI Bridge      2
 // MAC ID                3
 // SDCard                4
 // Associate(active Low) 5 (GPIO28)
 // WiFi Comms OK(low)    6 (GPIO31)
-//
 // Reset is hacked onto pin A1
+//
+// LCD Shield Configuration
+//
+// LCD SPI Bridge        A3
+// MAC ID                4 (Used on WizFi as SD Card CS)
+// SDCard                3 (Used on WizFi as MAC ID CS)
+// Reset                 7
+//
 */
 
 
@@ -35,7 +45,7 @@
 
 GB4DSPILcdDriver lcd(A3);
 GBIMAC macID(3);
-byte macAddress[MAC_LENGTH];
+byte macAddress[MAC_LENGTH],IPconnected = 0;
 // Enter a MAC address for your controller below.
 // Newer Ethernet shields have a MAC address printed on a sticker on the shield
 byte mac[] = {  0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
@@ -53,10 +63,27 @@ void setup() {
     // start the serial library:
   Serial.begin(115200);
 
-    delay(3000);
+//    delay(3000);
   lcd.initialise();
-  lcd.version(true);
+  //lcd.version(true);
 delay(1000);
+
+  // Different ways to set the background color
+  delay(1000);
+  lcd.setBackgroundColor(SGC_COLORS.BLACK);
+  lcd.clearScreen();
+  lcd.drawString(0,0, SGC_FONT_SIZE.SMALL, SGC_COLORS.WHITE, "GorillaBuilderz!!!");
+  lcd.drawString(0,1, SGC_FONT_SIZE.SMALL, SGC_COLORS.WHITE, "LCD+WizFi Sanity Test");  
+  // Fonts, shapes and colors
+  lcd.drawString(1,2, SGC_FONT_SIZE.SMALL, SGC_COLORS.WHITE,"SMALL FONT - WHITE");    
+  lcd.drawString(1,3, SGC_FONT_SIZE.MEDIUM, SGC_COLORS.WHITE,"MEDIUM FONT - WHITE");    
+  lcd.drawString(1,4, SGC_FONT_SIZE.LARGE, SGC_COLORS.WHITE,"LARGE FONT - WHITE");    
+
+  lcd.drawString(1,9, SGC_FONT_SIZE.SMALL, SGC_COLORS.WHITE, "Establishing WiFi connection,");
+  lcd.drawString(1,10, SGC_FONT_SIZE.SMALL, SGC_COLORS.WHITE, "  please wait..."); 
+  lcd.drawCircle(120, 150, 20,SGC_COLORS.YELLOW);
+
+
   Serial.println("");
   Serial.println("GB IMAC: Reading...");
 
@@ -67,51 +94,6 @@ for (i = 0; i < 6; i = i + 1) {
   Serial.print(macAddress[i],HEX);
 }
 Serial.println("");
-  // Different ways to set the background color
-  delay(1000);
-  lcd.setBackgroundColor(SGC_COLORS.WHITE);
-  lcd.clearScreen();
-  
-  delay(1000);
-  lcd.replaceBackgroundColor(SGC_COLORS.RED);
-  
-  delay(1000);    
-  lcd.setBackgroundColor(SGC_COLORS.GREEN);
-  lcd.clearScreen();  
-  delay(1000);    
-  lcd.setBackgroundColor(SGC_COLORS.BLUE);
-  lcd.clearScreen();  
-  delay(1000);    
-  lcd.setBackgroundColor(SGC_COLORS.BLACK);
-  lcd.clearScreen();  
-  
-  lcd.clearScreen();
-  lcd.drawString(0,0, SGC_FONT_SIZE.SMALL, SGC_COLORS.WHITE, "GorillaBuilderz!!!");
-  lcd.drawString(0,1, SGC_FONT_SIZE.SMALL, SGC_COLORS.WHITE, "4D LCD Shield 1");  
-
-  // Fonts, shapes and colors
-  lcd.drawString(1,3, SGC_FONT_SIZE.SMALL, SGC_COLORS.WHITE, "SMALL - WHITE");    
-  lcd.drawCircle(100, 100, 20, SGC_COLORS.WHITE);
-  lcd.drawPixel(150, 250, SGC_COLORS.WHITE);
-  
-  lcd.drawString(2,4, SGC_FONT_SIZE.MEDIUM, SGC_COLORS.RED, "MEDIUM - RED");    
-  lcd.drawTriangle(50, 150, 200, 150, 100, 200, SGC_COLORS.RED);  
-  lcd.drawRectangle(150, 5, 200, 50, SGC_COLORS.RED);  
-
-  lcd.drawString(3,4, SGC_FONT_SIZE.LARGE, SGC_COLORS.GREEN, "LARGE - GREEN");  
-  lcd.drawLine(20, 200, 50, 250, SGC_COLORS.GREEN);
-
-  lcd.drawString(4,4, SGC_FONT_SIZE.LARGEST, SGC_COLORS.BLUE, "LARGETST - BLUE!");  
-
-  lcd.drawElipse(200, 250, 15, 30, SGC_COLORS.BLUE);    
-
-  lcd.drawString(0,38, SGC_FONT_SIZE.SMALL, SGC_COLORS.RED, "Bye Bye!");  
-
-  lcd.drawGraphicsString(0, 100, SGC_FONT_SIZE.SMALL, SGC_COLORS.RED, "Graphics String!!!");     
-
-  
-  // start the serial library:
-//  Serial.begin(115200);
 
   Serial.println("GorillaBuilderz Arduino WebClient for WiFi Shield");
   Serial.println("Initialising modem and ataching to network...");
@@ -149,9 +131,18 @@ void loop()
 {
   // if there are incoming bytes available 
   // from the server, read them and print them:
+  lcd.setBackgroundColor(SGC_COLORS.BLACK);
+//  lcd.drawString(0,11, SGC_FONT_SIZE.SMALL, SGC_COLORS.WHITE, "WizFI & LCD Shield test complete");  
+
   if (client.available()) {
     char c = client.read();
     Serial.print(c);
+    if(!IPconnected){
+      IPconnected=1;
+      lcd.clearScreen(); 
+      lcd.drawString(7,11, SGC_FONT_SIZE.MEDIUM, SGC_COLORS.WHITE, "WizFI Connected!");  
+      lcd.drawCircle(120, 150, 20,SGC_COLORS.GREEN);
+    }
   }
 //if(  !digitalRead(6)  )
   //  Serial.println("Wif");
@@ -160,6 +151,9 @@ void loop()
   if (!client.connected()) {
     Serial.println();
     Serial.println("disconnecting.");
+    lcd.clearScreen(); 
+    lcd.drawString(5,11, SGC_FONT_SIZE.MEDIUM, SGC_COLORS.WHITE, "WizFI Disconnecting!"); 
+    lcd.drawCircle(120, 150, 20,SGC_COLORS.RED);
     client.stop();
 
     // do nothing forevermore:
