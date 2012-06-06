@@ -12,6 +12,17 @@
  
  */
 
+/* Hardware pin allocation for Resets, CS' etc
+// WizFi SPI Bridge      2
+// MAC ID                3
+// SDCard                4
+// Associate(active Low) 5 (GPIO28)
+// WiFi Comms OK(low)    6 (GPIO31)
+//
+// Reset is hacked onto pin A1
+*/
+
+
 #include <SPI.h>
 
 // Need to include GorillaBuilderz WizFi Ethernet libraries
@@ -21,9 +32,6 @@
 #include <GBStatus.h>
 #include <GB4DLcdDriver.h>
 #include <GBIMAC.h>
-#include <SD.h>
-
-int SD_CARD_CHIP_SELECT = 4;
 
 GB4DSPILcdDriver lcd(A3);
 GBIMAC macID(3);
@@ -37,9 +45,6 @@ IPAddress server(74,125,237,114); // Google
 // with the IP address and port of the server 
 // that you want to connect to (port 80 is default for HTTP):
 EthernetClient client;
-
-
-
 
 void setup() {
   pinMode(6, INPUT);
