@@ -20,9 +20,14 @@
 #include <GBEthernet.h>
 #include <GBStatus.h>
 #include <GB4DLcdDriver.h>
+#include <GBIMAC.h>
+#include <SD.h>
+
+int SD_CARD_CHIP_SELECT = 4;
 
 GB4DSPILcdDriver lcd(A3);
-
+GBIMAC macID(3);
+byte macAddress[MAC_LENGTH];
 // Enter a MAC address for your controller below.
 // Newer Ethernet shields have a MAC address printed on a sticker on the shield
 byte mac[] = {  0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
@@ -33,15 +38,30 @@ IPAddress server(74,125,237,114); // Google
 // that you want to connect to (port 80 is default for HTTP):
 EthernetClient client;
 
+
+
+
 void setup() {
   pinMode(6, INPUT);
   pinMode(5, INPUT);
   
-  
+    // start the serial library:
+  Serial.begin(115200);
+
     delay(3000);
   lcd.initialise();
   lcd.version(true);
+delay(1000);
+  Serial.println("");
+  Serial.println("GB IMAC: Reading...");
 
+  macID.read(macAddress);
+//  Serial.print("GB IMAC: ", macID.format(macAddress));
+int i;
+for (i = 0; i < 6; i = i + 1) {
+  Serial.print(macAddress[i],HEX);
+}
+Serial.println("");
   // Different ways to set the background color
   delay(1000);
   lcd.setBackgroundColor(SGC_COLORS.WHITE);
@@ -86,7 +106,7 @@ void setup() {
 
   
   // start the serial library:
-  Serial.begin(115200);
+//  Serial.begin(115200);
 
   Serial.println("GorillaBuilderz Arduino WebClient for WiFi Shield");
   Serial.println("Initialising modem and ataching to network...");
